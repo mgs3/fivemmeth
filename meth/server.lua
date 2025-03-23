@@ -1,5 +1,3 @@
-local zoneCoords = vector3(1394.7477, 3627.9487, 34.3793)
-local zoneRadius = 2
 local journeyModel = GetHashKey("journey")
 local methStart = false
 local roll = 0
@@ -23,11 +21,13 @@ local function checkPlayer()
         return false
     end
     local playerCoords = GetEntityCoords(playerPed)
-    local distance = #(playerCoords - zoneCoords)
-    if distance > zoneRadius then
-        return false
+    for _, coords in pairs(MethCoords) do
+        local distance = #(playerCoords - coords)
+        if distance <= MethRadius then
+            return true
+        end
     end
-    return true;
+    return false
 end
 
 RegisterNetEvent("fivem:checkStartMeth")
@@ -54,6 +54,8 @@ end)
 RegisterNetEvent("fivem:createOneMeth")
 AddEventHandler("fivem:createOneMeth", function()
     if not methStart or not checkPlayer() or not life then
+        TriggerClientEvent("fivem:stopMeth", source)
+        methStart = false
         return
     end
 

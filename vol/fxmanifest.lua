@@ -1,9 +1,10 @@
 version '1.0.0'
 author 'mgs3'
-description 'Vol a l\'étalage (Ne pas prendre en compte ce code pour le moment)'
+description 'Vol a l\'étalage'
 
 client_script 'client.lua'
 server_script 'server.lua'
+shared_script '@shared/shared.lua'
 
 fx_version 'cerulean'
 game 'gta5'

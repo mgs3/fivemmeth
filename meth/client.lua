@@ -1,52 +1,10 @@
-local zoneCoords = vector3(1394.7477, 3627.9487, 34.3793)
-local zoneRadius = 2.0
 local actionKeyE = 38
 local actionKeyF = 23
 local journeyModel = GetHashKey("journey")
 local methStart = false
-local fxId = {}
-local textData = {}
 local seatId = -1
 local mask = nil
 local startBlocked = false
-
-local function DrawTextForDuration(text, duration, x, y, r, g, b)
-    local id = math.random()
-    textData[id] = {
-        text = text,
-        timer = GetGameTimer() + duration,
-        id = id,
-        x = x,
-        y = y,
-        r = r,
-        g = g,
-        b = b
-    }
-end
-
-function DrawProgressBar(time)
-    local endTime = GetGameTimer() + time
-    while GetGameTimer() < endTime do
-        Citizen.Wait(0)
-        DrawRect(0.5, 0.9, 0.2, 0.01, 0, 0, 0, 150)
-        local progress = (time - (endTime - GetGameTimer())) / time
-        DrawRect(0.4 + (progress * 0.1), 0.9, progress * 0.2, 0.01, 255, 0, 0, 200)
-    end
-end
-
-local function GetPlayerSeatId(vehicle)
-    local playerPed = PlayerPedId()
-    local seatId = -1
-
-    for seatIndex = -1, GetVehicleModelNumberOfSeats(GetEntityModel(vehicle)) - 1 do
-        if GetPedInVehicleSeat(vehicle, seatIndex) == playerPed then
-            seatId = seatIndex
-            break
-        end
-    end
-
-    return seatId
-end
 
 local function IsPlayerInZoneAndInJourney()
     local playerPed = PlayerPedId()
@@ -55,17 +13,28 @@ local function IsPlayerInZoneAndInJourney()
     end
     local playerCoords = GetEntityCoords(playerPed)
     local vehicle = GetVehiclePedIsIn(playerPed, false)
-    local vehiculeModel = GetEntityModel(vehicle)
+    local vehicleModel = GetEntityModel(vehicle)
     if methStart then
-        seatId = GetPlayerSeatId(vehicle)
-        return vehiculeModel == journeyModel and seatId == 1 and Vdist(playerCoords.x, playerCoords.y, playerCoords.z, zoneCoords.x, zoneCoords.y, zoneCoords.z) < zoneRadius
+        local seatId = GetPlayerSeatId(vehicle)
+        for _, coords in pairs(MethCoords) do
+            if vehicleModel == journeyModel and seatId == 1 and Vdist(playerCoords.x, playerCoords.y, playerCoords.z, coords.x, coords.y, coords.z) < MethRadius then
+                return true
+            end
+        end
+        return false
     end
-    return vehiculeModel == journeyModel and Vdist(playerCoords.x, playerCoords.y, playerCoords.z, zoneCoords.x, zoneCoords.y, zoneCoords.z) < zoneRadius
+    for _, coords in pairs(MethCoords) do
+        if vehicleModel == journeyModel and Vdist(playerCoords.x, playerCoords.y, playerCoords.z, coords.x, coords.y, coords.z) < MethRadius then
+            return true
+        end
+    end
+    return false
 end
+
 
 local function StopMeth()
     methStart = false
-    StopParticleFxLooped(fxId["smoke"], false)
+    StopParticule("smoke")
 end
 
 local function CreateOneMeth()
@@ -82,17 +51,6 @@ local function CreateOneMeth()
     end
 end
 
-local function PlayParticule(id, name, entity, x, y, z, rx, ry, rz, s)
-    if not HasNamedPtfxAssetLoaded("core") then
-        RequestNamedPtfxAsset("core")
-        while (not HasNamedPtfxAssetLoaded("core")) do
-            Wait(100)
-        end
-    end
-    UseParticleFxAssetNextCall("core")
-    fxId[id] = StartParticleFxLoopedOnEntity(name, entity, x, y, z, rx, ry, rz, s, false, false, false)
-end
-
 RegisterNetEvent("fivem:badRollExplose")
 AddEventHandler("fivem:badRollExplose", function()
     startBlocked = true
@@ -104,7 +62,7 @@ AddEventHandler("fivem:badRollExplose", function()
     PlaySoundFromEntity(soundId, "Flare", vehicle, "DLC_HEISTS_BIOLAB_FINALE_SOUNDS", true, 0)
     PlayParticule("fire1", "ent_amb_fbi_fire_dub_door", vehicle, -0.9, -2.0, 1.0, 90.0, 90.0, 180.0, 1.5)
     Citizen.Wait(5000)
-    StopParticleFxLooped(fxId["fire1"], false)
+    StopParticule("fire1")
     PlayParticule("fire1", "ent_amb_fbi_fire_dub_door", vehicle,  -0.9, -2.0, 1.0, 90.0, 90.0, 180.0, 3.5)
     Citizen.Wait(2500)
     PlaySoundFromEntity(soundId2, "SPRAY", vehicle, "CARWASH_SOUNDS", true, 0)
@@ -112,8 +70,8 @@ AddEventHandler("fivem:badRollExplose", function()
     Citizen.Wait(3500)
     local vehicleCoords = GetEntityCoords(vehicle)
     AddExplosion(vehicleCoords.x, vehicleCoords.y, vehicleCoords.z, 2, 100.0, true, false, 1.0)
-    StopParticleFxLooped(fxId["fire1"], false)
-    StopParticleFxLooped(fxId["fire2"], false)
+    StopParticule("fire1")
+    StopParticule("fire2")
     StopSound(soundId)
     ReleaseSoundId(soundId)
     StopSound(soundId2)
@@ -160,12 +118,6 @@ AddEventHandler("fivem:applySteamDamage", function(life)
     SetEntityHealth(playerPed, life)
 end)
 
-local function showHelpText(text)
-    SetTextComponentFormat("STRING")
-    AddTextComponentString(text)
-    DisplayHelpTextFromStringLabel(0, false, false, -1)
-end
-
 local function SetDestination(coords)
     SetNewWaypoint(coords.x, coords.y)
     StartGpsMultiRoute(5, false, true)
@@ -183,13 +135,13 @@ Citizen.CreateThread(function()
                 seatId = GetPlayerSeatId(vehicle)
                 if IsPlayerInZoneAndInJourney() then
                     if seatId == 1 then
-                        showHelpText("Appuyez sur ~INPUT_CONTEXT~ pour créer de la Méthamphétamine.")
+                        ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour créer de la Méthamphétamine.")
                         if IsControlJustPressed(0, actionKeyE) then
                             TriggerServerEvent("fivem:checkStartMeth")
                         end
                     else
                         if IsVehicleSeatFree(vehicle, 1) then
-                            showHelpText("Appuyez sur ~INPUT_CONTEXT~ pour vous déplacer vers l'arrière du véhicule.")
+                            ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour vous déplacer vers l'arrière du véhicule.")
                             if IsControlJustPressed(0, actionKeyE) then
                                 SetVehicleEngineOn(vehicle, false, false, true)
                                 TaskWarpPedIntoVehicle(playerPed, vehicle, 1)
@@ -206,30 +158,11 @@ Citizen.CreateThread(function()
                     end
                 end
             else
-                showHelpText("Appuyez sur ~INPUT_ENTER~ pour stopper la création.")
+                ShowHelpText("Appuyez sur ~INPUT_ENTER~ pour stopper la création.")
                 if IsControlJustPressed(0, actionKeyF) then
                     TriggerServerEvent("fivem:stopMeth")
                     StopMeth()
                 end
-            end
-        end
-
-        for _, data in pairs(textData) do
-            local currentTime = GetGameTimer()
-
-            if currentTime > data.timer then
-                textData[data.id] = nil
-            else
-                SetTextScale(0.35, 0.35)
-                SetTextFont(4)
-                SetTextProportional(true)
-                SetTextColour(data.r, data.g, data.b, 255)
-                SetTextEdge(1, 0, 0, 0, 255)
-                SetTextDropShadow()
-                SetTextOutline()
-                SetTextEntry("STRING")
-                AddTextComponentString(data.text)
-                DrawText(data.x, data.y)
             end
         end
     end
