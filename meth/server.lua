@@ -9,13 +9,6 @@ local methamphetamine = 0
 local life = 150
 local hasmask = false
 
-local function getDistance(x1, y1, z1, x2, y2, z2)
-    local dx = x2 - x1
-    local dy = y2 - y1
-    local dz = z2 - z1
-    return math.sqrt(dx * dx + dy * dy + dz * dz)
-end
-
 local function checkPlayer()
     local playerPed = GetPlayerPed(source)
     if not playerPed then
@@ -30,7 +23,7 @@ local function checkPlayer()
         return false
     end
     local playerCoords = GetEntityCoords(playerPed)
-    local distance = getDistance(playerCoords.x, playerCoords.y, playerCoords.z, zoneCoords.x, zoneCoords.y, zoneCoords.z)
+    local distance = #(playerCoords - zoneCoords)
     if distance > zoneRadius then
         return false
     end
