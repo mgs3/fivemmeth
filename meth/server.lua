@@ -18,11 +18,11 @@ end
 
 local function checkPlayer()
     local playerPed = GetPlayerPed(source)
-    if playerPed == 0 or playerPed == nil then
+    if not playerPed then
         return false
     end
     local currentVehicle = GetVehiclePedIsIn(playerPed, false)
-    if currentVehicle == 0 or currentVehicle == nil then
+    if not currentVehicle then
         return false
     end
     local currentModel = GetEntityModel(currentVehicle)
@@ -39,10 +39,10 @@ end
 
 RegisterNetEvent("fivem:checkStartMeth")
 AddEventHandler("fivem:checkStartMeth", function()
-    if (methStart or life == 0) then
+    if methStart or not life then
         return false
     end
-    if (phenyl1propanone2 < 2 or chlorhydrate < 2) then
+    if phenyl1propanone2 < 2 or chlorhydrate < 2 then
         TriggerClientEvent("fivem:insufficientIngredients", source)
         return false
     end
@@ -60,18 +60,18 @@ end)
 
 RegisterNetEvent("fivem:createOneMeth")
 AddEventHandler("fivem:createOneMeth", function()
-    if methStart == false or checkPlayer() == false or life == 0 then
+    if not methStart or not checkPlayer() or not life then
         return
     end
 
-    if (roll == 1) then
+    if roll == 1 then
         methStart = false
         TriggerClientEvent("fivem:badRollExplose", source)
         return
     end
     roll = math.random(1, 100);
 
-    if (hasmask == false) then
+    if not hasmask then
         life = life - 1
         TriggerClientEvent("fivem:applySteamDamage", source, life)
     end
@@ -79,7 +79,7 @@ AddEventHandler("fivem:createOneMeth", function()
     phenyl1propanone2 = phenyl1propanone2 - 2
     chlorhydrate = chlorhydrate - 2
     methamphetamine = methamphetamine + 1
-    if (phenyl1propanone2 < 2 or chlorhydrate < 2) then
+    if phenyl1propanone2 < 2 or chlorhydrate < 2 then
         methStart = false
         TriggerClientEvent("fivem:endCreateMeth", source, methamphetamine)
         return

@@ -50,13 +50,13 @@ end
 
 local function IsPlayerInZoneAndInJourney()
     local playerPed = PlayerPedId()
-    if IsEntityDead(playerPed) or IsPedInAnyVehicle(playerPed, false) == false then
+    if IsEntityDead(playerPed) or not IsPedInAnyVehicle(playerPed, false) then
         return false
     end
     local playerCoords = GetEntityCoords(playerPed)
     local vehicle = GetVehiclePedIsIn(playerPed, false)
     local vehiculeModel = GetEntityModel(vehicle)
-    if (methStart) then
+    if methStart then
         seatId = GetPlayerSeatId(vehicle)
         return vehiculeModel == journeyModel and seatId == 1 and Vdist(playerCoords.x, playerCoords.y, playerCoords.z, zoneCoords.x, zoneCoords.y, zoneCoords.z) < zoneRadius
     end
@@ -69,7 +69,7 @@ local function StopMeth()
 end
 
 local function CreateOneMeth()
-    if (methStart == false) then
+    if not methStart then
         return
     end
     if IsPlayerInZoneAndInJourney() then
@@ -83,7 +83,7 @@ local function CreateOneMeth()
 end
 
 local function PlayParticule(id, name, entity, x, y, z, rx, ry, rz, s)
-    if (not HasNamedPtfxAssetLoaded("core")) then
+    if not HasNamedPtfxAssetLoaded("core") then
         RequestNamedPtfxAsset("core")
         while (not HasNamedPtfxAssetLoaded("core")) do
             Wait(100)
@@ -178,17 +178,17 @@ Citizen.CreateThread(function()
         Citizen.Wait(0)
         local playerPed = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(playerPed, false)
-        if (startBlocked == false) then
-            if (methStart == false) then
+        if not startBlocked then
+            if not methStart then
                 seatId = GetPlayerSeatId(vehicle)
                 if IsPlayerInZoneAndInJourney() then
-                    if (seatId == 1) then
+                    if seatId == 1 then
                         showHelpText("Appuyez sur ~INPUT_CONTEXT~ pour créer de la Méthamphétamine.")
                         if IsControlJustPressed(0, actionKeyE) then
                             TriggerServerEvent("fivem:checkStartMeth")
                         end
                     else
-                        if (IsVehicleSeatFree(vehicle, 1)) then
+                        if IsVehicleSeatFree(vehicle, 1) then
                             showHelpText("Appuyez sur ~INPUT_CONTEXT~ pour vous déplacer vers l'arrière du véhicule.")
                             if IsControlJustPressed(0, actionKeyE) then
                                 SetVehicleEngineOn(vehicle, false, false, true)
