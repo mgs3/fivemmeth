@@ -11,7 +11,8 @@ local function checkPlayer()
         return false
     end
     local playerCoords = GetEntityCoords(playerPed)
-    for _, coords in pairs(VolCoords) do
+    for i = 1, #VolCoords do
+        local coords = VolCoords[i]
         local distance = #(playerCoords - coords)
         if distance <= VolRadius then
             return true

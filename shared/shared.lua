@@ -68,7 +68,7 @@ end
 function DrawProgressBar(time)
     local endTime = GetGameTimer() + time
     while GetGameTimer() < endTime do
-        Citizen.Wait(0)
+        Wait(0)
         DrawRect(0.5, 0.9, 0.2, 0.01, 0, 0, 0, 150)
         local progress = (time - (endTime - GetGameTimer())) / time
         DrawRect(0.4 + (progress * 0.1), 0.9, progress * 0.2, 0.01, 255, 0, 0, 200)
@@ -91,7 +91,7 @@ end
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(0)
+        Wait(0)
         for _, data in pairs(textData) do
             local currentTime = GetGameTimer()
 

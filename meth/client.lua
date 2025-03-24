@@ -14,17 +14,19 @@ local function IsPlayerInZoneAndInJourney()
     local playerCoords = GetEntityCoords(playerPed)
     local vehicle = GetVehiclePedIsIn(playerPed, false)
     local vehicleModel = GetEntityModel(vehicle)
-    if methStart then
-        local seatId = GetPlayerSeatId(vehicle)
-        for _, coords in pairs(MethCoords) do
-            if vehicleModel == journeyModel and seatId == 1 and Vdist(playerCoords.x, playerCoords.y, playerCoords.z, coords.x, coords.y, coords.z) < MethRadius then
-                return true
-            end
-        end
+    if vehicleModel ~= journeyModel then
         return false
     end
-    for _, coords in pairs(MethCoords) do
-        if vehicleModel == journeyModel and Vdist(playerCoords.x, playerCoords.y, playerCoords.z, coords.x, coords.y, coords.z) < MethRadius then
+    if methStart then
+        local seatId = GetPlayerSeatId(vehicle)
+        if seatId ~= 1 then
+            return false
+        end
+    end
+    for i = 1, #MethCoords do
+        local coords = MethCoords[i]
+        local distance = #(playerCoords - coords)
+        if distance <= MethRadius then
             return true
         end
     end
@@ -61,13 +63,13 @@ AddEventHandler("fivem:badRollExplose", function()
     local soundId2 = GetSoundId()
     PlaySoundFromEntity(soundId, "Flare", vehicle, "DLC_HEISTS_BIOLAB_FINALE_SOUNDS", true, 0)
     PlayParticule("fire1", "ent_amb_fbi_fire_dub_door", vehicle, -0.9, -2.0, 1.0, 90.0, 90.0, 180.0, 1.5)
-    Citizen.Wait(5000)
+    Wait(5000)
     StopParticule("fire1")
     PlayParticule("fire1", "ent_amb_fbi_fire_dub_door", vehicle,  -0.9, -2.0, 1.0, 90.0, 90.0, 180.0, 3.5)
-    Citizen.Wait(2500)
+    Wait(2500)
     PlaySoundFromEntity(soundId2, "SPRAY", vehicle, "CARWASH_SOUNDS", true, 0)
     PlayParticule("fire2", "ent_amb_fbi_fire_dub_door", vehicle, 0.0, 2.0, 0.0, 0.0, 45.0, 90.0, 2.5)
-    Citizen.Wait(3500)
+    Wait(3500)
     local vehicleCoords = GetEntityCoords(vehicle)
     AddExplosion(vehicleCoords.x, vehicleCoords.y, vehicleCoords.z, 2, 100.0, true, false, 1.0)
     StopParticule("fire1")
@@ -127,7 +129,7 @@ end
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(0)
+        Wait(0)
         local playerPed = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(playerPed, false)
         if not startBlocked then

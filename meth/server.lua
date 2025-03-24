@@ -21,7 +21,8 @@ local function checkPlayer()
         return false
     end
     local playerCoords = GetEntityCoords(playerPed)
-    for _, coords in pairs(MethCoords) do
+    for i = 1, #MethCoords do
+        local coords = MethCoords[i]
         local distance = #(playerCoords - coords)
         if distance <= MethRadius then
             return true
