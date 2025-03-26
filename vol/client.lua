@@ -1,5 +1,4 @@
-local actionKeyE = 38
-local volStart = false
+local VolStart = false
 
 local function IsPlayerInZone()
     local playerPed = PlayerPedId()
@@ -27,7 +26,7 @@ local function PlayAnimationVol()
 end
 
 local function CreateOneVol()
-    if not volStart then
+    if not VolStart then
         return
     end
     if IsPlayerInZone() then
@@ -36,7 +35,7 @@ local function CreateOneVol()
         DrawProgressBar(3000)
         TriggerServerEvent("fivem:createOneVol")
     else
-        volStart = false
+        VolStart = false
         TriggerServerEvent("fivem:stopVol")
     end
 end
@@ -44,7 +43,7 @@ end
 RegisterNetEvent("fivem:volStartOk")
 AddEventHandler("fivem:volStartOk", function(roll)
     DrawTextForDuration("Lancé de dé : "..roll, 2500, 0.4, 0.91, 255, 255, 255)
-    volStart = true
+    VolStart = true
     CreateOneVol()
 end)
 
@@ -56,21 +55,21 @@ end)
 
 RegisterNetEvent("fivem:stopVol")
 AddEventHandler("fivem:stopVol", function(methamphetamine)
-    volStart = false
+    VolStart = false
 end)
 
 Citizen.CreateThread(function()
     while true do
         Wait(0)
         if IsPlayerInZone() then
-            if not volStart then
-                ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour commencer le vol.")
-                if IsControlJustPressed(0, actionKeyE) then
+            if not VolStart then
+                ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour commencer le vol.", 100, 0)
+                if IsControlJustPressed(0, ActionKeyE) then
                     TriggerServerEvent("fivem:checkStartVol")
                 end
             end
         else 
-            if volStart then
+            if VolStart then
                 ClearPedTasks(PlayerPedId())
             end
         end

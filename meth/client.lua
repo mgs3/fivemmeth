@@ -1,10 +1,7 @@
-local actionKeyE = 38
-local actionKeyF = 23
-local journeyModel = GetHashKey("journey")
-local methStart = false
-local seatId = -1
-local mask = nil
-local startBlocked = false
+local JourneyModel = GetHashKey("journey")
+local MethStart = false
+local HasMask = nil
+local StartBlocked = false
 
 local function IsPlayerInZoneAndInJourney()
     local playerPed = PlayerPedId()
@@ -14,14 +11,11 @@ local function IsPlayerInZoneAndInJourney()
     local playerCoords = GetEntityCoords(playerPed)
     local vehicle = GetVehiclePedIsIn(playerPed, false)
     local vehicleModel = GetEntityModel(vehicle)
-    if vehicleModel ~= journeyModel then
+    if vehicleModel ~= JourneyModel then
         return false
     end
-    if methStart then
-        local seatId = GetPlayerSeatId(vehicle)
-        if seatId ~= 1 then
-            return false
-        end
+    if MethStart and GetPlayerSeatId(vehicle) ~= 1 then
+        return false
     end
     for i = 1, #MethCoords do
         local coords = MethCoords[i]
@@ -33,14 +27,13 @@ local function IsPlayerInZoneAndInJourney()
     return false
 end
 
-
 local function StopMeth()
-    methStart = false
+    MethStart = false
     StopParticule("smoke")
 end
 
 local function CreateOneMeth()
-    if not methStart then
+    if not MethStart then
         return
     end
     if IsPlayerInZoneAndInJourney() then
@@ -55,7 +48,7 @@ end
 
 RegisterNetEvent("fivem:badRollExplose")
 AddEventHandler("fivem:badRollExplose", function()
-    startBlocked = true
+    StartBlocked = true
     StopMeth()
     local playerPed = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(playerPed, false)
@@ -78,7 +71,7 @@ AddEventHandler("fivem:badRollExplose", function()
     ReleaseSoundId(soundId)
     StopSound(soundId2)
     ReleaseSoundId(soundId2)
-    startBlocked = false
+    StartBlocked = false
 end)
 
 RegisterNetEvent("fivem:createOneMethSuccess")
@@ -107,10 +100,10 @@ end)
 RegisterNetEvent("fivem:methStartOk")
 AddEventHandler("fivem:methStartOk", function(roll)
     DrawTextForDuration("Lancé de dé : "..roll, 2500, 0.4, 0.91, 255, 255, 255)
-    methStart = true
+    MethStart = true
     local playerPed = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(playerPed, false)
-    PlayParticule("smoke" , "exp_grd_bzgas_smoke", vehicle, -0.6, -2.0, 0.8, 0.0, 0.0, 0.0, 1.5)
+    PlayParticule("smoke" , "ent_amb_smoke_foundry", vehicle, -0.6, -2.0, 0.8, 0.0, 0.0, 0.0, 1.5)
     CreateOneMeth()
 end)
 
@@ -127,46 +120,69 @@ local function SetDestination(coords)
     SetGpsMultiRouteRender(true)
 end
 
-Citizen.CreateThread(function()
-    while true do
-        Wait(0)
-        local playerPed = PlayerPedId()
-        local vehicle = GetVehiclePedIsIn(playerPed, false)
-        if not startBlocked then
-            if not methStart then
-                seatId = GetPlayerSeatId(vehicle)
-                if IsPlayerInZoneAndInJourney() then
-                    if seatId == 1 then
-                        ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour créer de la Méthamphétamine.")
-                        if IsControlJustPressed(0, actionKeyE) then
-                            TriggerServerEvent("fivem:checkStartMeth")
-                        end
-                    else
-                        if IsVehicleSeatFree(vehicle, 1) then
-                            ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour vous déplacer vers l'arrière du véhicule.")
-                            if IsControlJustPressed(0, actionKeyE) then
-                                SetVehicleEngineOn(vehicle, false, false, true)
-                                TaskWarpPedIntoVehicle(playerPed, vehicle, 1)
-                            end
-                        end
-                    end
-                else
-                    if IsPedInAnyVehicle(playerPed, false) then
-                        local vehiculeModel = GetEntityModel(vehicle)
-                        if vehiculeModel == journeyModel then
-                            local newDestination = vector3(1394.7477, 3627.9487, 34.3793)
-                            SetDestination(newDestination)
-                        end
-                    end
+local function AddGpsPoint(vehicle, seatId)
+    print(seatId)
+    if (seatId ~= -1) then
+        return
+    end
+    local vehicleModel = GetEntityModel(vehicle)
+    if vehicleModel ~= JourneyModel then
+        return
+    end
+    local newDestination = vector3(1394.7477, 3627.9487, 34.3793)
+    SetDestination(newDestination)
+end
+
+local function OnEnterVehicule(vehicle)
+    if StartBlocked or MethStart then
+        return
+    end
+    local seatId = GetPlayerSeatId(vehicle);
+    if not IsPlayerInZoneAndInJourney() then
+        AddGpsPoint(vehicle, seatId);
+        return
+    end
+    local stopHot = false
+    local playerPed = PlayerPedId()
+    while IsPedInAnyVehicle(playerPed, false) and not stopHot do
+        Wait(1)
+        if not MethStart then
+            if seatId == 1 then
+                ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour créer de la Méthamphétamine.", 1000, 0)
+                if IsControlJustPressed(0, ActionKeyE) then
+                    TriggerServerEvent("fivem:checkStartMeth")
                 end
             else
-                ShowHelpText("Appuyez sur ~INPUT_ENTER~ pour stopper la création.")
-                if IsControlJustPressed(0, actionKeyF) then
-                    TriggerServerEvent("fivem:stopMeth")
-                    StopMeth()
+                if IsVehicleSeatFree(vehicle, 1) then
+                    ShowHelpText("Appuyez sur ~INPUT_CONTEXT~ pour vous déplacer vers l'arrière du véhicule.", 1000, 0)
+                    if IsControlJustPressed(0, ActionKeyE) then
+                        SetVehicleEngineOn(vehicle, false, false, true)
+                        TaskWarpPedIntoVehicle(playerPed, vehicle, 1)
+                        seatId = 1
+                    end
                 end
             end
+        else
+            ShowHelpText("Appuyez sur ~INPUT_ENTER~ pour stopper la création.", 1000, 0)
+            if IsControlJustPressed(0, ActionKeyF) then
+                stopHot = true
+                ShowHelpText("", 100, 1)
+                TriggerServerEvent("fivem:stopMeth")
+                return
+            end
         end
+    end
+    ShowHelpText("", 100, 1)
+    if MethStart then
+        TriggerServerEvent("fivem:stopMeth")
+        StopMeth()
+    end
+end
+
+AddEventHandler('gameEventTriggered', function(eventName, data)
+    local playerId = data[1]
+    if eventName == "CEventNetworkPlayerEnteredVehicle" and playerId == PlayerId() then
+        OnEnterVehicule(data[2])
     end
 end)
 
@@ -186,10 +202,10 @@ end
 RegisterCommand("mask", function()
     local playerPed = PlayerPedId()
 
-    if mask then
+    if HasMask then
         PlayEmote()
-        DeleteEntity(mask)
-        mask = nil
+        DeleteEntity(HasMask)
+        HasMask = nil
         SetEntityProofs(playerPed, false, false, false, false, false, false, false, false)
         SetPedComponentVariation(PlayerPedId(), 1, 0, 0, 1) -- Ne marche pas mais je pense que c'est lié au autre script de CFX
         TriggerServerEvent("fivem:setOffMask")
@@ -204,8 +220,8 @@ RegisterCommand("mask", function()
     end
 
     PlayEmote()
-    mask = CreateObject(model, 0.0, 0.0, 0.0, true, true, false)
-    AttachEntityToEntity(mask, playerPed, GetPedBoneIndex(playerPed, 12844), 0, 0.0, 0, 0.0, 90.0, 180.0, true, true, false, true, 1, true)
+    HasMask = CreateObject(model, 0.0, 0.0, 0.0, true, true, false)
+    AttachEntityToEntity(HasMask, playerPed, GetPedBoneIndex(playerPed, 12844), 0, 0.0, 0, 0.0, 90.0, 180.0, true, true, false, true, 1, true)
     SetEntityProofs(playerPed, false, false, false, false, false, false, true, true)
     SetPedComponentVariation(PlayerPedId(), 1, 46, 0, 1) -- Ne marche pas mais je pense que c'est lié au autre script de CFX
     TriggerServerEvent("fivem:setOnMask")
@@ -214,8 +230,8 @@ end, false)
 
 AddEventHandler('onResourceStop', function(resourceName)
     if resourceName == GetCurrentResourceName() then
-        if mask then
-            DeleteEntity(mask)
+        if HasMask then
+            DeleteEntity(HasMask)
         end
     end
 end)

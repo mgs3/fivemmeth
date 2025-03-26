@@ -26,9 +26,12 @@ MethCoords = {
     vector3(1394.7477, 3627.9487, 34.3793)
 }
 MethRadius = 2
+CurrentDisplayHelp = false;
+ActionKeyE = 38
+ActionKeyF = 23
+FxId = {}
 
-local textData = {}
-local fxId = {}
+local TextData = {}
 
 function GetPlayerSeatId(vehicle)
     local playerPed = PlayerPedId()
@@ -52,17 +55,24 @@ function PlayParticule(id, name, entity, x, y, z, rx, ry, rz, s)
         end
     end
     UseParticleFxAssetNextCall("core")
-    fxId[id] = StartParticleFxLoopedOnEntity(name, entity, x, y, z, rx, ry, rz, s, false, false, false)
+    FxId[id] = StartParticleFxLoopedOnEntity(name, entity, x, y, z, rx, ry, rz, s, false, false, false)
 end
 
 function StopParticule(id)
-    StopParticleFxLooped(fxId[id], false)
+    StopParticleFxLooped(FxId[id], false)
 end
 
-function ShowHelpText(text)
+function ShowHelpText(text, duration, clean)
+    if CurrentDisplayHelp and not clean then
+        return
+    end
+    CurrentDisplayHelp = true
     SetTextComponentFormat("STRING")
     AddTextComponentString(text)
     DisplayHelpTextFromStringLabel(0, false, false, -1)
+    SetTimeout(duration, function()
+        CurrentDisplayHelp = false
+    end)
 end
 
 function DrawProgressBar(time)
@@ -77,7 +87,7 @@ end
 
 function DrawTextForDuration(text, duration, x, y, r, g, b)
     local id = math.random()
-    textData[id] = {
+    TextData[id] = {
         text = text,
         timer = GetGameTimer() + duration,
         id = id,
@@ -92,11 +102,11 @@ end
 Citizen.CreateThread(function()
     while true do
         Wait(0)
-        for _, data in pairs(textData) do
+        for _, data in pairs(TextData) do
             local currentTime = GetGameTimer()
 
             if currentTime > data.timer then
-                textData[data.id] = nil
+                TextData[data.id] = nil
             else
                 SetTextScale(0.35, 0.35)
                 SetTextFont(4)
