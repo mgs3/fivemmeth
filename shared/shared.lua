@@ -31,8 +31,6 @@ ActionKeyE = 38
 ActionKeyF = 23
 FxId = {}
 
-local TextData = {}
-
 function GetPlayerSeatId(vehicle)
     local playerPed = PlayerPedId()
     local seatId = -1
@@ -75,50 +73,26 @@ function ShowHelpText(text, duration, clean)
     end)
 end
 
-function DrawProgressBar(time)
-    local endTime = GetGameTimer() + time
-    while GetGameTimer() < endTime do
-        Wait(0)
-        DrawRect(0.5, 0.9, 0.2, 0.01, 0, 0, 0, 150)
-        local progress = (time - (endTime - GetGameTimer())) / time
-        DrawRect(0.4 + (progress * 0.1), 0.9, progress * 0.2, 0.01, 255, 0, 0, 200)
-    end
-end
-
-function DrawTextForDuration(text, duration, x, y, r, g, b)
-    local id = math.random()
-    TextData[id] = {
-        text = text,
-        timer = GetGameTimer() + duration,
-        id = id,
-        x = x,
-        y = y,
-        r = r,
-        g = g,
-        b = b
-    }
-end
-
-Citizen.CreateThread(function()
-    while true do
-        Wait(0)
-        for _, data in pairs(TextData) do
-            local currentTime = GetGameTimer()
-
-            if currentTime > data.timer then
-                TextData[data.id] = nil
-            else
-                SetTextScale(0.35, 0.35)
-                SetTextFont(4)
-                SetTextProportional(true)
-                SetTextColour(data.r, data.g, data.b, 255)
-                SetTextEdge(1, 0, 0, 0, 255)
-                SetTextDropShadow()
-                SetTextOutline()
-                SetTextEntry("STRING")
-                AddTextComponentString(data.text)
-                DrawText(data.x, data.y)
+function DrawTextAndProgressBar(text, duration, x, y, r, g, b, withProgressBar)
+    CreateThread(function()
+        local endTime = GetGameTimer() + duration
+        while GetGameTimer() < endTime do
+            Wait(0)
+            if withProgressBar then
+                DrawRect(0.5, 0.9, 0.2, 0.01, 0, 0, 0, 150)
+                local progress = (duration - (endTime - GetGameTimer())) / duration
+                DrawRect(0.4 + (progress * 0.1), 0.9, progress * 0.2, 0.01, 255, 0, 0, 200)
             end
+            SetTextScale(0.35, 0.35)
+            SetTextFont(4)
+            SetTextProportional(true)
+            SetTextColour(r, g, b, 255)
+            SetTextEdge(1, 0, 0, 0, 255)
+            SetTextDropShadow()
+            SetTextOutline()
+            SetTextEntry("STRING")
+            AddTextComponentString(text)
+            DrawText(x, y)
         end
-    end
-end)
+    end)
+end

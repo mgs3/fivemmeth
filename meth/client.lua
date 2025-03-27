@@ -37,8 +37,8 @@ local function CreateOneMeth()
         return
     end
     if IsPlayerInZoneAndInJourney() then
-        DrawTextForDuration("Création de Méthamphétamine", 2500, 0.4, 0.87, 255, 255, 255)
-        DrawProgressBar(2500)
+        DrawTextAndProgressBar("Création de Méthamphétamine", 2500, 0.4, 0.87, 255, 255, 255, true)
+        Wait(2500)
         TriggerServerEvent("fivem:createOneMeth")
     else
         StopMeth()
@@ -76,19 +76,19 @@ end)
 
 RegisterNetEvent("fivem:createOneMethSuccess")
 AddEventHandler("fivem:createOneMethSuccess", function(methamphetamine, roll)
-    DrawTextForDuration("+1 Méthamphétamine ("..methamphetamine..") Nouveau dé : " .. roll, 1000, 0.4, 0.91, 0, 255, 0)
+    DrawTextAndProgressBar("+1 Méthamphétamine ("..methamphetamine..") Nouveau dé : " .. roll, 1000, 0.4, 0.91, 0, 255, false)
     CreateOneMeth()
 end)
 
 RegisterNetEvent("fivem:insufficientIngredients")
 AddEventHandler("fivem:insufficientIngredients", function(methamphetamine)
-    DrawTextForDuration("Pas assez d'ingrédients", 1000, 0.4, 0.91, 255, 0, 0)
+    DrawTextAndProgressBar("Pas assez d'ingrédients", 1000, 0.4, 0.91, 255, 0, 0, false)
     StopMeth()
 end)
 
 RegisterNetEvent("fivem:endCreateMeth")
 AddEventHandler("fivem:endCreateMeth", function(methamphetamine)
-    DrawTextForDuration("Fin de création (Methamphetamine : "..methamphetamine..")", 2000, 0.4, 0.91, 255, 255, 255)
+    DrawTextAndProgressBar("Fin de création (Methamphetamine : "..methamphetamine..")", 2000, 0.4, 0.91, 255, 255, 255, false)
     StopMeth()
 end)
 
@@ -99,7 +99,7 @@ end)
 
 RegisterNetEvent("fivem:methStartOk")
 AddEventHandler("fivem:methStartOk", function(roll)
-    DrawTextForDuration("Lancé de dé : "..roll, 2500, 0.4, 0.91, 255, 255, 255)
+    DrawTextAndProgressBar("Lancé de dé : "..roll, 2500, 0.4, 0.91, 255, 255, 255, false)
     MethStart = true
     local playerPed = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(playerPed, false)
@@ -121,30 +121,33 @@ local function SetDestination(coords)
 end
 
 local function AddGpsPoint(vehicle, seatId)
-    print(seatId)
     if (seatId ~= -1) then
-        return
+        return false
     end
     local vehicleModel = GetEntityModel(vehicle)
     if vehicleModel ~= JourneyModel then
-        return
+        return false
     end
     local newDestination = vector3(1394.7477, 3627.9487, 34.3793)
     SetDestination(newDestination)
+    return true
 end
 
 local function OnEnterVehicule(vehicle)
     if StartBlocked or MethStart then
         return
     end
-    local seatId = GetPlayerSeatId(vehicle);
-    if not IsPlayerInZoneAndInJourney() then
-        AddGpsPoint(vehicle, seatId);
+    local seatId = GetPlayerSeatId(vehicle)
+    local playerPed = PlayerPedId()
+    if AddGpsPoint(vehicle, seatId) then
+        while IsPedInAnyVehicle(playerPed, false) and not IsPlayerInZoneAndInJourney() do
+            Wait(1000)
+        end
+    else
         return
     end
     local stopHot = false
-    local playerPed = PlayerPedId()
-    while IsPedInAnyVehicle(playerPed, false) and not stopHot do
+    while IsPedInAnyVehicle(playerPed, false) and not stopHot and IsPlayerInZoneAndInJourney() do
         Wait(1)
         if not MethStart then
             if seatId == 1 then
@@ -177,16 +180,12 @@ local function OnEnterVehicule(vehicle)
         TriggerServerEvent("fivem:stopMeth")
         StopMeth()
     end
+    if IsPedInAnyVehicle(playerPed, false) then
+        OnEnterVehicule(vehicle)
+    end
 end
 
-AddEventHandler('gameEventTriggered', function(eventName, data)
-    local playerId = data[1]
-    if eventName == "CEventNetworkPlayerEnteredVehicle" and playerId == PlayerId() then
-        OnEnterVehicule(data[2])
-    end
-end)
-
-local function notify(text)
+local function Notify(text)
     SetNotificationTextEntry("STRING")
     AddTextComponentString(text)
     DrawNotification(false, false)
@@ -209,7 +208,7 @@ RegisterCommand("mask", function()
         SetEntityProofs(playerPed, false, false, false, false, false, false, false, false)
         SetPedComponentVariation(PlayerPedId(), 1, 0, 0, 1) -- Ne marche pas mais je pense que c'est lié au autre script de CFX
         TriggerServerEvent("fivem:setOffMask")
-        notify("Gasmask ~r~off")
+        Notify("Gasmask ~r~off")
         return
     end
 
@@ -225,7 +224,7 @@ RegisterCommand("mask", function()
     SetEntityProofs(playerPed, false, false, false, false, false, false, true, true)
     SetPedComponentVariation(PlayerPedId(), 1, 46, 0, 1) -- Ne marche pas mais je pense que c'est lié au autre script de CFX
     TriggerServerEvent("fivem:setOnMask")
-    notify("Gasmask ~g~on")
+    Notify("Gasmask ~g~on")
 end, false)
 
 AddEventHandler('onResourceStop', function(resourceName)
@@ -234,4 +233,22 @@ AddEventHandler('onResourceStop', function(resourceName)
             DeleteEntity(HasMask)
         end
     end
+end)
+
+AddEventHandler('gameEventTriggered', function(eventName, data)
+    local playerId = data[1]
+    if eventName == "CEventNetworkPlayerEnteredVehicle" and playerId == PlayerId() then
+        OnEnterVehicule(data[2])
+    end
+end)
+
+AddEventHandler("onResourceStart", function(resourceName)
+    if GetCurrentResourceName() ~= resourceName then
+        return
+    end
+    local playerPed = PlayerPedId()
+    if not IsPedInAnyVehicle(playerPed, true) then
+        return
+    end
+    OnEnterVehicule(GetVehiclePedIsIn(playerPed, false))
 end)

@@ -2,7 +2,7 @@ local VolStart = false
 local Roll
 local Object = 0
 
-local function checkPlayer()
+local function CheckPlayer()
     local playerPed = GetPlayerPed(source)
     if not playerPed then
         return false
@@ -28,7 +28,7 @@ end)
 
 RegisterNetEvent("fivem:createOneVol")
 AddEventHandler("fivem:createOneVol", function()
-    if not VolStart or not checkPlayer() then
+    if not VolStart or not CheckPlayer() then
         VolStart = false
         TriggerClientEvent("fivem:stopVol", source, Roll)
         return
@@ -50,7 +50,7 @@ AddEventHandler("fivem:checkStartVol", function()
     if VolStart then
         return false
     end
-    if checkPlayer() then
+    if CheckPlayer() then
         Roll = math.random(1, 100);
         TriggerClientEvent("fivem:volStartOk", source, Roll)
         VolStart = true

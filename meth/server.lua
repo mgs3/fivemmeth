@@ -7,7 +7,7 @@ local Methamphetamine = 0
 local Life = 150
 local HasMask = false
 
-local function checkPlayer()
+local function CheckPlayer()
     local playerPed = GetPlayerPed(source)
     if not playerPed then
         return false
@@ -40,8 +40,8 @@ AddEventHandler("fivem:checkStartMeth", function()
         TriggerClientEvent("fivem:insufficientIngredients", source)
         return false
     end
-    if checkPlayer() then
-        Roll = math.random(1, 100);
+    if CheckPlayer() then
+        Roll = math.random(1, 100)
         TriggerClientEvent("fivem:methStartOk", source, Roll)
         MethStart = true
     end
@@ -54,7 +54,7 @@ end)
 
 RegisterNetEvent("fivem:createOneMeth")
 AddEventHandler("fivem:createOneMeth", function()
-    if not MethStart or not checkPlayer() or not Life then
+    if not MethStart or not CheckPlayer() or not Life then
         TriggerClientEvent("fivem:stopMeth", source)
         MethStart = false
         return
@@ -65,7 +65,7 @@ AddEventHandler("fivem:createOneMeth", function()
         TriggerClientEvent("fivem:badRollExplose", source)
         return
     end
-    Roll = math.random(1, 100);
+    Roll = math.random(1, 100)
 
     if not HasMask then
         Life = Life - 1
