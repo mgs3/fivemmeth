@@ -67,6 +67,7 @@ local function OnEnterVehicule(vehicle)
     if vehicleModel ~= JourneyModel then return false end
     local seatId = GetPlayerSeatId(vehicle)
     if seatId ~= -1 then return false end
+
     SetDestination(GetClosestMethCoord())
     local playerPed = PlayerPedId()
     while IsPedInAnyVehicle(playerPed, false) and not IsPlayerInZoneAndInJourney() do

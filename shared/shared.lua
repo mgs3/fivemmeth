@@ -40,37 +40,26 @@ function SetDestination(coords)
 end
 
 function FreezePlayer(id, freeze)
-    local player = id
-    local ped = GetPlayerPed(player)
-
-    SetPlayerControl(player, not freeze, 0)
-    if not freeze then
-        if not IsEntityVisible(ped) then SetEntityVisible(ped, true, false) end
-        if not IsPedInAnyVehicle(ped, false) then SetEntityCollision(ped, true, false) end
-        FreezeEntityPosition(ped, false)
-        SetPlayerInvincible(player, false)
-    else
-        if IsEntityVisible(ped) then
-            SetEntityVisible(ped, false, false)
-        end
-        SetEntityCollision(ped, false, false)
-        FreezeEntityPosition(ped, true)
-        SetPlayerInvincible(player, true)
-        if not IsPedFatallyInjured(ped) then ClearPedTasksImmediately(ped) end
+    local ped = GetPlayerPed(id)
+    SetPlayerControl(id, not freeze, 0)
+    SetEntityVisible(ped, not freeze, false)
+    SetEntityCollision(ped, not freeze, false)
+    FreezeEntityPosition(ped, freeze)
+    SetPlayerInvincible(id, freeze)
+    if freeze then
+        ClearPedTasksImmediately(ped)
     end
 end
 
 function GetPlayerSeatId(vehicle)
     local playerPed = PlayerPedId()
     local seatId = -1
-
     for seatIndex = -1, GetVehicleModelNumberOfSeats(GetEntityModel(vehicle)) - 1 do
         if GetPedInVehicleSeat(vehicle, seatIndex) == playerPed then
             seatId = seatIndex
             break
         end
     end
-
     return seatId
 end
 
