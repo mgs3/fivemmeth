@@ -9,33 +9,23 @@ local HasMask = false
 
 local function CheckPlayer()
     local playerPed = GetPlayerPed(source)
-    if not playerPed then
-        return false
-    end
+    if not playerPed then return false end
     local currentVehicle = GetVehiclePedIsIn(playerPed, false)
-    if not currentVehicle then
-        return false
-    end
+    if not currentVehicle then return false end
     local currentModel = GetEntityModel(currentVehicle)
-    if currentModel ~= JourneyModel then
-        return false
-    end
+    if currentModel ~= JourneyModel then return false end
     local playerCoords = GetEntityCoords(playerPed)
     for i = 1, #MethCoords do
         local coords = MethCoords[i]
         local distance = #(playerCoords - coords)
-        if distance <= MethRadius then
-            return true
-        end
+        if distance <= MethRadius then return true end
     end
     return false
 end
 
 RegisterNetEvent("fivem:checkStartMeth")
 AddEventHandler("fivem:checkStartMeth", function()
-    if MethStart or not Life then
-        return false
-    end
+    if MethStart or not Life then return false end
     if Phenyl1Propanone2 < 2 or Chlorhydrate < 2 then
         TriggerClientEvent("fivem:insufficientIngredients", source)
         return false

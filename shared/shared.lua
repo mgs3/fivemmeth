@@ -23,13 +23,42 @@ VolCoords = {
 }
 VolRadius = 0.5
 MethCoords = {
-    vector3(1394.7477, 3627.9487, 34.3793)
+    vector3(1394.7477, 3627.9487, 34.3793),
+    vector3(556.7466, 2661.2266, 42.1901)
 }
 MethRadius = 2
 CurrentDisplayHelp = false;
 ActionKeyE = 38
 ActionKeyF = 23
 FxId = {}
+
+function SetDestination(coords)
+    SetNewWaypoint(coords.x, coords.y)
+    StartGpsMultiRoute(5, false, true)
+    AddPointToGpsMultiRoute(coords.x, coords.y, coords.z)
+    SetGpsMultiRouteRender(true)
+end
+
+function FreezePlayer(id, freeze)
+    local player = id
+    local ped = GetPlayerPed(player)
+
+    SetPlayerControl(player, not freeze, 0)
+    if not freeze then
+        if not IsEntityVisible(ped) then SetEntityVisible(ped, true, false) end
+        if not IsPedInAnyVehicle(ped, false) then SetEntityCollision(ped, true, false) end
+        FreezeEntityPosition(ped, false)
+        SetPlayerInvincible(player, false)
+    else
+        if IsEntityVisible(ped) then
+            SetEntityVisible(ped, false, false)
+        end
+        SetEntityCollision(ped, false, false)
+        FreezeEntityPosition(ped, true)
+        SetPlayerInvincible(player, true)
+        if not IsPedFatallyInjured(ped) then ClearPedTasksImmediately(ped) end
+    end
+end
 
 function GetPlayerSeatId(vehicle)
     local playerPed = PlayerPedId()
@@ -61,9 +90,7 @@ function StopParticule(id)
 end
 
 function ShowHelpText(text, duration, clean)
-    if CurrentDisplayHelp and not clean then
-        return
-    end
+    if CurrentDisplayHelp and not clean then return end
     CurrentDisplayHelp = true
     SetTextComponentFormat("STRING")
     AddTextComponentString(text)
