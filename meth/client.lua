@@ -56,11 +56,6 @@ local function GetClosestMethCoord()
     return closestCoord
 end
 
-local function AddGpsPoint(vehicle, seatId)
-    
-    return true
-end
-
 local function OnEnterVehicule(vehicle)
     if StartBlocked or MethStart then return end
     local vehicleModel = GetEntityModel(vehicle)
